@@ -15,8 +15,8 @@ data NameState = NameState
 
 initialNameState :: NameState
 initialNameState = NameState
-  { varNames  = map (Var . ('$':)) namelist
-  , tvarNames = map (TypeVar . ('\'':)) namelist
+  { varNames  = map (varS . ('$':)) namelist
+  , tvarNames = map (tvarS . ('\'':)) namelist
   , indent    = 0
   }
   where

@@ -28,19 +28,25 @@ subst e' x expr = case expr of
 
 -- Smart constructors
 var :: String -> Expr
-var = EVar . Var
+var = EVar . varS
 eunit :: Expr
 eunit = EUnit
 eabs :: String -> Expr -> Expr
-eabs = EAbs . Var
+eabs = EAbs . varS
 infixr 1 $$
 ($$) :: Expr -> Expr -> Expr
 ($$) = EApp
 (-:) :: Expr -> Polytype -> Expr
 (-:) = EAnno
 
-newtype Var  = Var     String deriving (Eq, Ord, Show)
-newtype TVar = TypeVar String deriving (Eq, Ord, Show)
+newtype Name = Name String deriving (Eq, Ord, Show)
+
+newtype Var  = Var     Name deriving (Eq, Ord, Show)
+varS :: String -> Var
+varS = Var . Name
+newtype TVar = TypeVar Name deriving (Eq, Ord, Show)
+tvarS :: String -> TVar
+tvarS = TypeVar . Name
 
 data TypeKind = Mono | Poly
 
@@ -59,11 +65,11 @@ deriving instance Eq (Type a)
 tunit :: Type a
 tunit = TUnit
 tvar :: String -> Type a
-tvar = TVar . TypeVar
+tvar = TVar . tvarS
 exists :: String -> Type a
-exists = TExists . TypeVar
+exists = TExists . tvarS
 tforall :: String -> Polytype -> Polytype
-tforall = TForall . TypeVar
+tforall = TForall . tvarS
 (-->) :: Type a -> Type a -> Type a
 (-->) = TFun
 infixr 1 -->

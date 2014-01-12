@@ -29,11 +29,14 @@ instance (Pretty a, Pretty b, Pretty c) => Pretty (a, b, c) where
     showString ", " . bpretty 0 z .
     showString ")"
 
+instance Pretty Name where
+  bpretty _ (Name n) = showString n
+    
 instance Pretty Var where
-  bpretty _ (Var v) = showString v
+  bpretty n (Var v) = bpretty n v
 
 instance Pretty TVar where
-  bpretty _ (TypeVar v) = showString v
+  bpretty n (TypeVar v) = bpretty n v
 
 instance Pretty (Type a) where
   bpretty d typ = case typ of
