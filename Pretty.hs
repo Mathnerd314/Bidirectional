@@ -31,24 +31,27 @@ instance (Pretty a, Pretty b, Pretty c) => Pretty (a, b, c) where
 
 instance Pretty Name where
   bpretty _ (Name n) = showString n
+  bpretty d (Lift n) = bpretty d n . ('^':)
+  bpretty d (LeftN n) = bpretty d n . ("_l"++)
+  bpretty d (RightN n) = bpretty d n . ("_r"++)
     
 instance Pretty Var where
-  bpretty n (Var v) = bpretty n v
+  bpretty d (Var v) = bpretty d v
 
 instance Pretty TVar where
-  bpretty n (TypeVar v) = bpretty n v
+  bpretty d (TypeVar v) = bpretty d v
 
 instance Pretty (Type a) where
   bpretty d typ = case typ of
     TUnit -> showString "()"
     TVar v -> bpretty d v
     TExists v -> showParen (d > exists_prec) $
-      showString "∃ " . bpretty exists_prec v
+      showString "exists " . bpretty exists_prec v
     TForall v t -> showParen (d > forall_prec) $
-      showString "∀ " . bpretty (forall_prec + 1) v .
+      showString "forall " . bpretty (forall_prec + 1) v .
       showString ". "      . bpretty forall_prec t
     TFun t1 t2 -> showParen (d > fun_prec) $
-      bpretty (fun_prec + 1) t1 . showString " → " .
+      bpretty (fun_prec + 1) t1 . showString " -> " .
       bpretty fun_prec t2
     where
       exists_prec = 10
@@ -61,7 +64,7 @@ instance Pretty Expr where
     EVar v       -> bpretty d v
     EUnit        -> showString "()"
     EAbs v e     -> showParen (d > abs_prec) $
-      showString "λ" . bpretty (abs_prec + 1) v .
+      showString "\\" . bpretty (abs_prec + 1) v .
       showString ". " . bpretty abs_prec e
     EApp e1 e2   -> showParen (d > app_prec) $
       bpretty app_prec e1 . showString " " . bpretty (app_prec + 1) e2
@@ -81,12 +84,12 @@ instance Pretty (ContextElem a) where
     CVar v t -> showParen (d > hastype_prec) $
       bpretty (hastype_prec + 1) v . showString " : " . bpretty hastype_prec t
     CExists v -> showParen (d > exists_prec) $
-      showString "∃ " . bpretty exists_prec v
+      showString "exists " . bpretty exists_prec v
     CExistsSolved v t -> showParen (d > exists_prec) $
-      showString "∃ " . bpretty exists_prec v .
+      showString "exists " . bpretty exists_prec v .
       showString " = " . bpretty exists_prec t
     CMarker v -> showParen (d > app_prec) $
-      showString "▶ " . bpretty (app_prec + 1) v
+      showString "|> " . bpretty (app_prec + 1) v
     where
       exists_prec = 1
       hastype_prec = 1

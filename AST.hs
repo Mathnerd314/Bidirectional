@@ -39,7 +39,11 @@ infixr 1 $$
 (-:) :: Expr -> Polytype -> Expr
 (-:) = EAnno
 
-newtype Name = Name String deriving (Eq, Ord, Show)
+data Name = Name String
+          | Lift Name
+	  | LeftN Name
+	  | RightN Name
+	    deriving (Eq, Ord, Show)
 
 newtype Var  = Var     Name deriving (Eq, Ord, Show)
 varS :: String -> Var
@@ -47,6 +51,9 @@ varS = Var . Name
 newtype TVar = TypeVar Name deriving (Eq, Ord, Show)
 tvarS :: String -> TVar
 tvarS = TypeVar . Name
+
+liftTVar :: (Name -> Name) -> TVar -> TVar
+liftTVar f (TypeVar n) = TypeVar (f n)
 
 data TypeKind = Mono | Poly
 
@@ -136,7 +143,7 @@ data ContextElem :: ContextKind -> * where
 deriving instance Eq (ContextElem a)
 deriving instance Show (ContextElem a)
 
-newtype GContext a      = Context [ContextElem a]
+newtype GContext a      = Context [ContextElem a] deriving (Show,Eq)
 type CompleteContext = GContext Complete
 type Context         = GContext Incomplete
 

@@ -35,7 +35,7 @@ subtype gamma typ1 typ2 =
     -- <:forallL
     (TForall alpha a, b) -> do
       -- Do alpha conversion to avoid clashes
-      alpha' <- freshTVar
+      let alpha' = liftTVar Lift alpha
       dropMarker (CMarker alpha') <$>
         subtype (gamma >++ [CMarker alpha', CExists alpha'])
                 (typeSubst (TExists alpha') alpha a)
@@ -43,7 +43,7 @@ subtype gamma typ1 typ2 =
     -- <:forallR
     (a, TForall alpha b) -> do
       -- Do alpha conversion to avoid clashes
-      alpha' <- freshTVar
+      let alpha' = liftTVar Lift alpha
       dropMarker (CForall alpha') <$>
         subtype (gamma >: CForall alpha') a (typeSubst (TVar alpha') alpha b)
     -- <:InstantiateL
@@ -72,8 +72,8 @@ instantiateL gamma alpha a =
         return $ fromJust $ solve gamma beta (TExists alpha)
       -- InstLArr
       TFun a1 a2   -> do
-        alpha1 <- freshTVar
-        alpha2 <- freshTVar
+        let alpha1 = liftTVar LeftN alpha
+        let alpha2 = liftTVar RightN alpha
         theta <- instantiateR (insertAt gamma (CExists alpha) $ context
                                 [ CExists alpha2
                                 , CExists alpha1
@@ -85,7 +85,7 @@ instantiateL gamma alpha a =
       -- InstLAIIR
       TForall beta b -> do
         -- Do alpha conversion to avoid clashes
-        beta' <- freshTVar
+        let beta' = liftTVar Lift beta
         dropMarker (CForall beta') <$>
           instantiateL (gamma >++ [CForall beta'])
                        alpha
@@ -107,8 +107,8 @@ instantiateR gamma a alpha =
         fromJust $ solve gamma beta (TExists alpha)
       -- InstRArr
       TFun a1 a2   -> do
-        alpha1 <- freshTVar
-        alpha2 <- freshTVar
+        let alpha1 = liftTVar LeftN alpha
+        let alpha2 = liftTVar RightN alpha
         theta <- instantiateL (insertAt gamma (CExists alpha) $ context
                                  [ CExists alpha2
                                  , CExists alpha1
@@ -121,7 +121,7 @@ instantiateR gamma a alpha =
       -- InstRAIIL
       TForall beta b -> do
         -- Do alpha conversion to avoid clashes
-        beta' <- freshTVar
+        let beta' = liftTVar Lift beta
         dropMarker (CMarker beta') <$>
           instantiateR (gamma >++ [CMarker beta', CExists beta'])
                        (typeSubst (TExists beta') beta b)
@@ -140,7 +140,7 @@ typecheck gamma expr typ =
     -- ForallI
     (e, TForall alpha a) -> do
       -- Do alpha conversion to avoid clashes
-      alpha' <- freshTVar
+      let alpha' = liftTVar Lift alpha
       dropMarker (CForall alpha') <$>
         typecheck (gamma >: CForall alpha') e (typeSubst (TVar alpha') alpha a)
     -- ->I
@@ -257,4 +257,4 @@ ididunit = eabs "id" (((var "id" -: tforall "t" (tvar "t" --> tvar "t"))  $$ var
 idunit :: Expr -- (λid. id ()) ((λx. x) : ∀ t. t → t)
 idunit = eabs "id" (var "id" $$ eunit) $$ eid
 idid :: Expr -- id id
-idid = (eid $$ eid) -: tforall "t" (tvar "t" --> tvar "t")
+idid = ((eabs "id" (var "id" $$ var "id")) $$ eid) -: tforall "t" (tvar "t" --> tvar "t")
